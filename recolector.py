@@ -3,19 +3,12 @@ import csv
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-import json
 
 # ==========================
 # CONFIGURACIÓN
 # ==========================
 
-# Cargar credenciales de OpenSky (clientId / clientSecret)
-with open("credentials.json", "r") as f:
-    creds = json.load(f)
-USER = creds["clientId"]
-PASS = creds["clientSecret"]
-
-# Zona de interés: Madrid-Barajas (LEMD)
+# Zona de interés: Madrid-Barajas (LEMD) y alrededores
 PARAMS = {
     "lamin": 40.2,
     "lomin": -3.8,
@@ -32,15 +25,10 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 # ==========================
 
 def obtener_vuelos():
-    """Descarga los vuelos activos sobre Barajas (con reintentos y autenticación)."""
+    """Descarga los vuelos activos sobre Barajas (con reintentos y timeout ampliado)."""
     for intento in range(3):
         try:
-            r = requests.get(
-                URL_OPENSKY,
-                params=PARAMS,
-                auth=(USER, PASS),  # autenticación básica
-                timeout=30
-            )
+            r = requests.get(URL_OPENSKY, params=PARAMS, timeout=30)
             r.raise_for_status()
             data = r.json()
             return data.get("states", []), data.get("time")
@@ -83,7 +71,7 @@ def guardar_csv(filas):
 
 def recolectar():
     """Consulta OpenSky, guarda datos y devuelve nº de registros."""
-    print("📡 Consultando OpenSky – área LEMD (con autenticación)...")
+    print("📡 Consultando OpenSky – área LEMD (sin autenticación, timeout 30s)...")
     try:
         states, t = obtener_vuelos()
         hora_utc = datetime.fromtimestamp(t, tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
@@ -123,5 +111,7 @@ def recolectar():
 
 if __name__ == "__main__":
     recolectar()
+
+
 
 
