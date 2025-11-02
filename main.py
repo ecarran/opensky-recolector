@@ -1,30 +1,23 @@
-from fastapi import FastAPI
-from fastapi.responses import FileResponse
-from recolector import recolectar
+from fastapi import FastAPI, Request
+import requests
+from fastapi.responses import JSONResponse
 
-app = FastAPI(title="API Recolector OpenSky LEMD")
+app = FastAPI(title="OpenSky Relay (Render)")
+
+OPENSKY_URL = "https://opensky-network.org/api/states/all"
 
 @app.get("/")
 def home():
-    return {"mensaje": "API OpenSky-Barajas operativa. Usa /recolectar para ejecutar."}
+    return {"status": "ok", "message": "Relay operativo en Render (FastAPI)"}
 
-@app.get("/recolectar")
-def lanzar_recoleccion():
-    """Ejecuta una recolección manual."""
+@app.get("/opensky")
+def relay(request: Request):
+    params = dict(request.query_params)
     try:
-        registros = recolectar()
-        return {"status": "ok", "registros": registros}
+        r = requests.get(OPENSKY_URL, params=params, timeout=15)
+        r.raise_for_status()
+        return JSONResponse(r.json())
     except Exception as e:
-        return {"status": "error", "detalle": str(e)}
+        return JSONResponse({"error": str(e)}, status_code=500)
 
-@app.get("/descargar")
-def descargar_csv():
-    """Descarga el CSV diario acumulado."""
-    from pathlib import Path
-    from datetime import datetime
 
-    nombre = f"opensky_LEMD_{datetime.now().strftime('%Y%m%d')}.csv"
-    path = Path("data/raw") / nombre
-    if not path.exists():
-        return {"error": "Aún no se ha generado el CSV de hoy."}
-    return FileResponse(path, media_type='text/csv', filename=path.name)
