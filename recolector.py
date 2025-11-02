@@ -16,7 +16,7 @@ PARAMS = {
     "lomax": -3.3
 }
 
-URL_OPENSKY = "https://opensky-relay.onrender.com/opensky"
+URL_OPENSKY = "https://opensky-network.org/api/states/all"
 DATA_DIR = Path("data/raw")
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -111,6 +111,7 @@ def recolectar():
 
 if __name__ == "__main__":
     recolectar()
+
 
 
 
