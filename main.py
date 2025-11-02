@@ -1,23 +1,25 @@
-from fastapi import FastAPI, Request
-import requests
+from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+from recolector import recolectar
 
-app = FastAPI(title="OpenSky Relay (Render)")
-
-OPENSKY_URL = "https://opensky-network.org/api/states/all"
+app = FastAPI(title="OpenSky-Barajas API")
 
 @app.get("/")
 def home():
-    return {"status": "ok", "message": "Relay operativo en Render (FastAPI)"}
+    return {"mensaje": "API OpenSky-Barajas operativa. Usa /recolectar para ejecutar."}
 
-@app.get("/opensky")
-def relay(request: Request):
-    params = dict(request.query_params)
+
+@app.get("/recolectar")
+def ejecutar_recolector():
+    """
+    Ejecuta el proceso de recolección de vuelos sobre el área LEMD
+    y devuelve el número de registros guardados o el error detectado.
+    """
     try:
-        r = requests.get(OPENSKY_URL, params=params, timeout=15)
-        r.raise_for_status()
-        return JSONResponse(r.json())
+        registros = recolectar()
+        return JSONResponse({"status": "ok", "registros": registros})
     except Exception as e:
-        return JSONResponse({"error": str(e)}, status_code=500)
+        return JSONResponse({"status": "error", "detalle": str(e)})
+
 
 
